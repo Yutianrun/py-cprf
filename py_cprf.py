@@ -30,17 +30,31 @@ class cPRF:
         return encrypted
     
     def lambda_bit_prf(self, input_bits, key_as_seed):
-        
+
+        # xor version to simplify the circuit
         if len(input_bits) > self.lambda_ or any(bit not in '01' for bit in input_bits):
             raise ValueError(f'input_bits 必须是小于{self.lambda_}位的比特字符串, 现有字符串位数为{len(input_bits)}')
         elif len(input_bits) < self.lambda_:
             input_bits = input_bits.zfill(self.lambda_)
+        
         random.seed(key_as_seed)
-        keys = [''.join(bits) for bits in itertools.product('01', repeat=self.lambda_)]
-        values = keys.copy()
-        random.shuffle(values)
-        prf_table = dict(zip(keys, values))
-        return prf_table.get(input_bits, '0' * self.lambda_)
+        random_bits = ''.join(random.choice('01') for _ in range(self.lambda_))
+        
+        prf_result = ''.join(str(int(input_bits[i]) ^ int(random_bits[i])) for i in range(self.lambda_))
+        
+        return prf_result
+        
+        # prp version to instantile the prf
+        # if len(input_bits) > self.lambda_ or any(bit not in '01' for bit in input_bits):
+        #     raise ValueError(f'input_bits 必须是小于{self.lambda_}位的比特字符串, 现有字符串位数为{len(input_bits)}')
+        # elif len(input_bits) < self.lambda_:
+        #     input_bits = input_bits.zfill(self.lambda_)
+        # random.seed(key_as_seed)
+        # keys = [''.join(bits) for bits in itertools.product('01', repeat=self.lambda_)]
+        # values = keys.copy()
+        # random.shuffle(values)
+        # prf_table = dict(zip(keys, values))
+        # return prf_table.get(input_bits, '0' * self.lambda_)
 
 
     def Setup(self):
@@ -178,7 +192,7 @@ if __name__ == "__main__":
 
     t = 2  # 子集的大小
     l = 4  # 输入长度
-    lambda_ = 8  # AES密钥长度
+    lambda_ = 6  # AES密钥长度
     
     # lambda_ = t * (l-1).bit_length() + t  # AES密钥长度
     cprf = cPRF(t, l, lambda_=lambda_)
